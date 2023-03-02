@@ -1,5 +1,4 @@
 # RL Snake
----
 ## Description
 
 ## Installation
