@@ -1,23 +1,22 @@
-from snake import Snake
-from RL import QLearningAgent
+from RL_Snake import RL_Snake, STATE_SPACE_SIZE, ACTION_SPACE_SIZE
+from RL.q import QLearningAgent
 import matplotlib.pylab as plt
+import numpy as np
+np.random.seed(3407)
 
-game = Snake()
-agent = QLearningAgent((4, 4, 4, 8), 3)
-agent.create_model(0.1, 0.99, e_decay=0.9999)
+game = RL_Snake()
+agent = QLearningAgent(STATE_SPACE_SIZE, ACTION_SPACE_SIZE)
+agent.create_model(lr=0.1, y=0.99, e_decay=0.999)
 
-scores = []
-while game.running:
-    reward = []
-    s = game.reset()
-    while not game.loop_once():
-        a = agent.policy(s)
-        ns, r, d = game.step(game.translate_action(a))
-        agent.learn(s, a, ns, r, d)
-        s = ns
-        reward.append(r)
-    scores.append(sum(reward))
-    print(agent.e, agent.episode_count)
-agent.save_model('model.npy')
-plt.plot(scores)
+for _ in range(2000):
+    state = game.reset()
+    while not game.over and game.running:
+        action = agent.policy(state)
+        next_state, reward, done = game.step(game.translate_action(action))
+        agent.learn(state, action, next_state, reward, done)
+        state = next_state
+
+print(f"mean: {np.mean(agent.reward_history)}")
+print(f"max: {np.max(agent.reward_history)}")
+plt.plot(agent.reward_history)
 plt.show()
