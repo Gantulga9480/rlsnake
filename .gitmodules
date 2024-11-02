@@ -1,0 +1,6 @@
+[submodule "pysnake"]
+	path = pysnake
+	url = https://github.com/Gantulga9480/pysnake.git
+[submodule "pyrl"]
+	path = pyrl
+	url = https://github.com/Gantulga9480/pyrl.git
