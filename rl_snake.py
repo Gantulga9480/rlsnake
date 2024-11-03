@@ -10,8 +10,9 @@ STATE_SPACE_SIZE = (3, 3, 3, 3, 3)  # Total size ?
 
 class rl_Snake(Snake):
 
-  def __init__(self, board_size = 10):
+  def __init__(self, board_size: int = 10, deep: bool = False):
     super().__init__(board_size)
+    self.deep = deep
 
   def reset(self):
     """
@@ -24,58 +25,70 @@ class rl_Snake(Snake):
     self.head_dir = self.translate_action(action)
     last_score = self.score
     self.move()
-    # reward = 0
-    # if self.score - last_score > 0:
-    #    reward = 400
-    # if self.game_over:
-    #    reward = -4000
-    reward = -1 if self.game_over else self.score - last_score
+    reward = 0
+    if self.game_over:
+      reward = -100
+    else:
+      if self.score - last_score > 0:
+        reward = 10
+      else:
+        reward = -0.1  # reward for surviving
+    # reward = -1 if self.game_over else self.score - last_score
     return self.state(), reward, self.game_over
 
   def state(self) -> tuple:
     """
     Utility function to extract current state from game board
-    @return 3 node (0 to 3) around snake head, food diraction from snake head
     """
+
+    if self.deep:
+      return self.board.flatten()
+
+    x = self.body[0][0]  # head x
+    y = self.body[0][1]  # head y
+    d = self.body[0][2]  # head dir
+
     state = []
-    x = self.body[0][0]
-    y = self.body[0][1]
-    d = self.body[0][2]
+
+    def append_state(x, y):
+      if 0 <= y < self.board_size and 0 <= x < self.board_size:
+        state.append(self.board[y][x])
+      else:
+        state.append(TAIL)
+
+    def append_direction(value):
+      if value < 0:
+        state.append(-1)
+      elif value == 0:
+        state.append(0)
+      else:
+        state.append(1)
+
     if d == UP:
-      state.append(self.board[y][x - 1]) if x > 0 else state.append(TAIL)
-      state.append(self.board[y - 1][x]) if y > 0 else state.append(TAIL)
-      state.append(self.board[y][x + 1]) if x < self.board_size - 1 else state.append(TAIL)
+      append_state(y, x - 1)
+      append_state(y - 1, x)
+      append_state(y, x + 1)
     elif d == RIGHT:
-      state.append(self.board[y - 1][x]) if y > 0 else state.append(TAIL)
-      state.append(self.board[y][x + 1]) if x < self.board_size - 1 else state.append(TAIL)
-      state.append(self.board[y + 1][x]) if y < self.board_size - 1 else state.append(TAIL)
+      append_state(y - 1, x)
+      append_state(y, x + 1)
+      append_state(y + 1, x)
     elif d == DOWN:
-      state.append(self.board[y][x + 1]) if x < self.board_size - 1 else state.append(TAIL)
-      state.append(self.board[y + 1][x]) if y < self.board_size - 1 else state.append(TAIL)
-      state.append(self.board[y][x - 1]) if x > 0 else state.append(TAIL)
+      append_state(y, x + 1)
+      append_state(y + 1, x)
+      append_state(y, x - 1)
     elif d == LEFT:
-      state.append(self.board[y + 1][x]) if y < self.board_size - 1 else state.append(TAIL)
-      state.append(self.board[y][x - 1]) if x > 0 else state.append(TAIL)
-      state.append(self.board[y - 1][x]) if y > 0 else state.append(TAIL)
-    dif_x = self.food_position[0] - x
-    dif_y = self.food_position[1] - y
-    if dif_y < 0:
-       state.append(-1)
-    if dif_y == 0:
-       state.append(0)
-    if dif_y > 0:
-       state.append(1)
-    if dif_x < 0:
-       state.append(-1)
-    if dif_x == 0:
-       state.append(0)
-    if dif_x > 0:
-       state.append(1)
+      append_state(y + 1, x)
+      append_state(y, x - 1)
+      append_state(y - 1, x)
+
+    append_direction(self.food_position[0] - x)
+    append_direction(self.food_position[1] - y)
+
     return tuple(state)
 
   def translate_action(self, action):
     """
-    Utility function convert model action to game action
+    Utility function convert model action (turn left/right, go forward) to game action (up, down, left, right)
     """
     if action == FORWARD:
         return self.body[0][2]

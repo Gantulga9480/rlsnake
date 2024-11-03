@@ -5,7 +5,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 game = rl_Snake(20)
 agent = QLearningAgent(STATE_SPACE_SIZE, ACTION_SPACE_SIZE)
-agent.create_model(lr=0.1, gamma=0.9, e_decay=0.99999)
+agent.create_model(lr=0.1, gamma=0.9, e_decay=0.999999)
 
 writer = SummaryWriter()
 

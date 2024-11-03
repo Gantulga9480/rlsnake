@@ -1,6 +1,7 @@
 from pysnake import PySnake
 from rl_snake import rl_Snake, STATE_SPACE_SIZE, ACTION_SPACE_SIZE
 from pyrl.q import QLearningAgent
+import pygame as pg
 
 class QPySnake(PySnake):
 
@@ -9,6 +10,12 @@ class QPySnake(PySnake):
     self.snake = rl_Snake(board_size)
     self.fps = 60
     self.custom_setup()
+
+  def onEvent(self, event):
+    if event.type == pg.KEYUP:
+      if event.key == pg.K_r:
+        self.reset()
+    super().onEvent(event)
 
   def reset(self):
     return self.snake.reset()
@@ -20,9 +27,17 @@ class QPySnake(PySnake):
   def loop(self):
     pass
 
+from tkinter import Tk, filedialog
+tk_root = Tk()
+tk_root.withdraw()
+dir_name = filedialog.askopenfilename()
+
+if not dir_name.endswith('.npy'):
+  raise Exception(f"invalid file type {dir_name.split('.')[-1]}")
+
 game = QPySnake(20)
 agent = QLearningAgent(STATE_SPACE_SIZE, ACTION_SPACE_SIZE)
-agent.load_model('model.npy')
+agent.load_model(dir_name)
 agent.eval()
 
 while game.running:
